@@ -57,6 +57,7 @@ define([
 						$(list).addClass("fill");
 					}
 					this.combobox._prepareInput(this.inputNode);
+					this.combobox._inputInitialized = true;
 				}
 			}
 		},

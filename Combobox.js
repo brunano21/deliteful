@@ -651,7 +651,9 @@ define([
 				}
 			}.bind(this), inputElement);
 
-			this._inputInitialized = true;
+			if (!this._useCenteredDropDown()) {
+				this._inputInitialized = true;
+			}
 		},
 
 		_validateSingle: function () {
