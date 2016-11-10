@@ -283,7 +283,7 @@ define([
 		minFilterChars: 1,
 
 		/**
-		 * Displayed value, when Combobox.value is eset at the creation time.
+		 * Displayed value, when Combobox.value is set at the creation time.
 		 * @type {string}
 		 */
 		displayedValue: "",
@@ -307,14 +307,14 @@ define([
 				this.list = new List();
 			}
 
-			this.own(this.on("click", function () {
+			this.on("click", function () {
 				// NOTE: This runs only when in mobile mode
 				if (this._useCenteredDropDown() && !this.disabled) {
 					this.openDropDown();
 				}
-			}.bind(this)));
+			}.bind(this));
 
-			this.own(this.on("mousedown", function (evt) {
+			this.on("mousedown", function (evt) {
 				// NOTE: This runs only when in desktop mode
 				if (!this._useCenteredDropDown() && (!this.minFilterChars || this._inputReadOnly)) {
 					// event could be triggered by the down arrow element. If so, we do not react to it.
@@ -326,7 +326,7 @@ define([
 						}
 					}
 				}
-			}.bind(this)));
+			}.bind(this));
 		},
 
 		postRender: function () {
@@ -719,7 +719,7 @@ define([
 
 		_validateSingle: function (userInteraction) {
 			if (userInteraction) {
-			var selectedItem = this.list.selectedItem;
+				var selectedItem = this.list.selectedItem;
 				// selectedItem non-null because List in radio selection mode, but
 				// the List can be empty, so:
 				this.inputNode.value = selectedItem ? this._getItemLabel(selectedItem) : "";
