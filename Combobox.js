@@ -355,7 +355,7 @@ define([
 				this._setSelectable(this.inputNode, !this.inputNode.readOnly);
 			}
 			if ("value" in oldValues && justCreated) {
-				this._validateInput(false);
+				this._validateInput(false, justCreated);
 				if (this.value === "") {
 					this.value = (this.selectionMode === "single") ? "" : [];
 				}
@@ -709,27 +709,27 @@ define([
 			}.bind(this), inputElement);
 		},
 
-		_validateInput: function (userInteraction) {
+		_validateInput: function (userInteraction, init) {
 			if (this.selectionMode === "single") {
-				this._validateSingle(userInteraction);
+				this._validateSingle(userInteraction, init);
 			} else {
-				this._validateMultiple(userInteraction);
+				this._validateMultiple(userInteraction, init);
 			}
 		},
 
-		_validateSingle: function (userInteraction) {
+		_validateSingle: function (userInteraction, init) {
 			if (userInteraction) {
 				var selectedItem = this.list.selectedItem;
 				// selectedItem non-null because List in radio selection mode, but
 				// the List can be empty, so:
 				this.inputNode.value = selectedItem ? this._getItemLabel(selectedItem) : "";
 				this.value = selectedItem ? this._getItemValue(selectedItem) : "";
-			} else {
+			} else if (init) {
 				this.inputNode.value = this.displayedValue !== "" ? this.displayedValue : this.value;
 			}
 		},
 
-		_validateMultiple: function (userInteraction) {
+		_validateMultiple: function (userInteraction, init) {
 			var n;
 			if (userInteraction) {
 				var selectedItems = this.list.selectedItems;
@@ -753,7 +753,7 @@ define([
 				// make sure this is already done when FormValueWidget.handleOnInput() runs.
 				this.valueNode.value = value;
 				this.handleOnInput(this.value); // emit "input" event
-			} else {
+			} else if (init) {
 				var items = [];
 				if (typeof this.value === "string" && this.value.length > 0) {
 					items = this.value = this.value.split(",");
