@@ -302,10 +302,6 @@ define([
 					this.list = list;
 				}
 			}
-			if (!this.list) {
-				// default list, may be overridden later by user-defined value or when above event listener fires
-				this.list = new List();
-			}
 
 			this.on("click", function () {
 				// NOTE: This runs only when in mobile mode
@@ -327,6 +323,47 @@ define([
 					}
 				}
 			}.bind(this));
+		},
+
+		parseAttribute: dcl.superCall(function (sup) {
+			return function (name, value) {
+				var capitalize = /f(?=unc$)|a(?=ttr$)/;
+				if (/Attr$|Func$/i.test(name)) {
+					name = name.toLowerCase();	// needed only on IE9
+					name = this._propCaseMap[name] ||
+							name.replace(capitalize, capitalize.exec(name)[0].toUpperCase());
+					return {
+						prop: name,
+						value: /Attr$/.test(name) ? value :
+							this.parseFunctionAttribute(value, ["item", "store", "value"])
+					};
+				} else {
+					return sup.apply(this, arguments);
+				}
+			};
+		}),
+
+		attachedCallback: function () {
+			if (!this.list) {
+				var regexp = /^(?!_)(\w)+(?=Attr$|Func$)/;
+				this._listArgs = {};
+
+				// attributes
+				this._parsedAttributes.filter(function (attr) {
+					return regexp.test(attr.prop);
+				}).forEach(function (item) {
+					this._listArgs[item.prop] = item.value;
+				}.bind(this));
+
+				// properties
+				Object.keys(this).filter(regexp.test.bind(regexp))
+				.forEach(function (item) {
+					this._listArgs[item] = this[item];
+				}.bind(this));
+
+				this.list = new List(this._listArgs);
+				this.deliver();
+			}
 		},
 
 		postRender: function () {
@@ -413,30 +450,32 @@ define([
 		},
 
 		_initList: function () {
-			// TODO
-			// This is a workaround waiting for a proper mechanism (at the level
-			// of delite/Store - delite/StoreMap) to allow a store-based widget
-			// to delegate the store-related functions to a parent widget (delite#323).
-			if (!this.list.attached) {
-				this.list.attachedCallback();
+			if (this.list) {
+				// TODO
+				// This is a workaround waiting for a proper mechanism (at the level
+				// of delite/Store - delite/StoreMap) to allow a store-based widget
+				// to delegate the store-related functions to a parent widget (delite#323).
+				if (!this.list.attached) {
+					this.list.attachedCallback();
+				}
+
+				// Class added on the list such that Combobox' theme can have a specific
+				// CSS selector for elements inside the List when used as dropdown in
+				// the combo.
+				$(this.list).addClass("d-combobox-list");
+
+				// The drop-down is hidden initially
+				$(this.list).addClass("d-hidden");
+
+				// The role=listbox is required for the list part of a combobox by the
+				// aria spec of role=combobox
+				this.list.type = "listbox";
+
+				this.list.selectionMode = this.selectionMode === "single" ?
+					"radio" : "multiple";
+
+				this._initHandlers();
 			}
-
-			// Class added on the list such that Combobox' theme can have a specific
-			// CSS selector for elements inside the List when used as dropdown in
-			// the combo.
-			$(this.list).addClass("d-combobox-list");
-
-			// The drop-down is hidden initially
-			$(this.list).addClass("d-hidden");
-
-			// The role=listbox is required for the list part of a combobox by the
-			// aria spec of role=combobox
-			this.list.type = "listbox";
-
-			this.list.selectionMode = this.selectionMode === "single" ?
-				"radio" : "multiple";
-
-			this._initHandlers();
 		},
 
 		_initHandlers: function () {
