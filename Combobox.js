@@ -346,24 +346,24 @@ define([
 		attachedCallback: function () {
 			if (!this.list) {
 				var regexp = /^(?!_)(\w)+(?=Attr$|Func$)/;
-				this._listArgs = {};
+				var listArgs = {};
 
 				// attributes
 				this._parsedAttributes.filter(function (attr) {
 					return regexp.test(attr.prop);
 				}).forEach(function (item) {
-					this._listArgs[item.prop] = item.value;
+					listArgs[item.prop] = item.value;
 				}.bind(this));
 
 				// properties
 				for (var prop in this) {
 					var match = regexp.exec(prop);
-					if (match && !(match.input in this._listArgs)) {
-						this._listArgs[match.input] = this[match.input];
+					if (match && !(match.input in listArgs)) {
+						listArgs[match.input] = this[match.input];
 					}
 				}
 
-				this.list = new List(this._listArgs);
+				this.list = new List(listArgs);
 				this.deliver();
 			}
 		},
@@ -394,7 +394,12 @@ define([
 				this._setSelectable(this.inputNode, !this.inputNode.readOnly);
 			}
 			if ("value" in oldValues) {
-				this._validateInput(false, true);
+				console.log("refresh");
+				if (!this._justValidated) {
+					this._validateInput(false, true);
+				} else {
+					delete this._justValidated;
+				}
 			}
 		},
 
@@ -747,11 +752,13 @@ define([
 		},
 
 		_validateInput: function (userInteraction, init) {
+			console.log("_validateInput");
 			if (this.selectionMode === "single") {
 				this._validateSingle(userInteraction, init);
 			} else {
 				this._validateMultiple(userInteraction, init);
 			}
+			this._justValidated = true;
 		},
 
 		_validateSingle: function (userInteraction, init) {
