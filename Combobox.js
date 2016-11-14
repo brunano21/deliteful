@@ -13,7 +13,7 @@ define([
 	"delite/handlebars!./Combobox/Combobox.html",
 	"requirejs-dplugins/i18n!./Combobox/nls/Combobox",
 	"delite/theme!./Combobox/themes/{{theme}}/Combobox.css"
-], function (
+], function (//
 	dcl,
 	$,
 	Filter,
@@ -356,10 +356,12 @@ define([
 				}.bind(this));
 
 				// properties
-				Object.keys(this).filter(regexp.test.bind(regexp))
-				.forEach(function (item) {
-					this._listArgs[item] = this[item];
-				}.bind(this));
+				for (var prop in this) {
+					var match = regexp.exec(prop);
+					if (match && !(match.input in this._listArgs)) {
+						this._listArgs[match.input] = this[match.input];
+					}
+				}
 
 				this.list = new List(this._listArgs);
 				this.deliver();
@@ -371,7 +373,7 @@ define([
 		},
 
 		/* jshint maxcomplexity: 17 */
-		refreshRendering: function (oldValues, justCreated) {
+		refreshRendering: function (oldValues) {
 			var updateReadOnly = false;
 			if ("list" in oldValues) {
 				this._initList();
@@ -391,12 +393,8 @@ define([
 				this._updateInputReadOnly();
 				this._setSelectable(this.inputNode, !this.inputNode.readOnly);
 			}
-			if ("value" in oldValues && justCreated) {
-				this._validateInput(false, justCreated);
-				if (this.value === "") {
-					this.value = (this.selectionMode === "single") ? "" : [];
-				}
-				this.valueNode.value = this.value.toString();
+			if ("value" in oldValues) {
+				this._validateInput(false, true);
 			}
 		},
 
@@ -794,9 +792,13 @@ define([
 				this.handleOnInput(this.value); // emit "input" event
 			} else if (init) {
 				var items = [];
-				if (typeof this.value === "string" && this.value.length > 0) {
-					items = this.value = this.value.split(",");
-					this.valueNode.value = this.value;
+				if (typeof this.value === "string") {
+					if (this.value.length > 0) {
+						items = this.value = this.value.split(",");
+					} else {
+						this.value = [];
+					}
+					this.valueNode.value = this.value.toString();
 				} else if (this.value instanceof Array) {
 					items = this.value;
 				} // else empty array. No pre-set values.
