@@ -394,7 +394,6 @@ define([
 				this._setSelectable(this.inputNode, !this.inputNode.readOnly);
 			}
 			if ("value" in oldValues) {
-				console.log("refresh");
 				if (!this._justValidated) {
 					this._validateInput(false, true);
 				} else {
@@ -752,7 +751,6 @@ define([
 		},
 
 		_validateInput: function (userInteraction, init) {
-			console.log("_validateInput");
 			if (this.selectionMode === "single") {
 				this._validateSingle(userInteraction, init);
 			} else {
