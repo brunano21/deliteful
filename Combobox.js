@@ -373,6 +373,8 @@ define([
 				this.list = new List(listArgs);
 				this.deliver();
 			}
+
+			this._updateInputReadOnly();
 		},
 
 		postRender: function () {
@@ -398,7 +400,6 @@ define([
 			}
 			if (updateReadOnly) {
 				this._updateInputReadOnly();
-				this._setSelectable(this.inputNode, !this.inputNode.readOnly);
 			}
 			if ("value" in oldValues) {
 				if (!this._justValidated) {
@@ -440,23 +441,17 @@ define([
 				// the notification:
 				this.notifyCurrentValue("_inputReadOnly");
 			} // else no need to notify "by hand", rely on automatic notification
-		},
 
-		/**
-		 * Configures inputNode such that the text is selectable or unselectable.
-		 * @private
-		 */
-		_setSelectable: function (inputNode, selectable) {
-			if (selectable) {
-				inputNode.removeAttribute("unselectable");
-				$(inputNode)
-					.css("user-select", "") // maps to WebkitUserSelect, etc.
-					.off("selectstart", false);
-			} else {
-				inputNode.setAttribute("unselectable", "on");
-				$(inputNode)
+			if (this._inputReadOnly) {
+				this.inputNode.setAttribute("unselectable", "on");
+				$(this.inputNode)
 					.css("user-select", "none") // maps to WebkitUserSelect, etc.
 					.on("selectstart", false);
+			} else {
+				this.inputNode.removeAttribute("unselectable");
+				$(this.inputNode)
+					.css("user-select", "") // maps to WebkitUserSelect, etc.
+					.off("selectstart", false);
 			}
 		},
 
