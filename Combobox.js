@@ -295,6 +295,8 @@ define([
 		// Flag used for post initializing the widget value, if the list has not been created yet.
 		_processValueAfterListInit: false,
 
+		_isMobile: false,
+
 		createdCallback: function () {
 			// Declarative case (list specified declaratively inside the declarative Combobox)
 			var list = this.querySelector("d-list");
@@ -312,14 +314,14 @@ define([
 
 			this.on("click", function () {
 				// NOTE: This runs only when in mobile mode
-				if (this._useCenteredDropDown() && !this.disabled) {
+				if (this._isMobile && !this.disabled) {
 					this.openDropDown();
 				}
 			}.bind(this));
 
 			this.on("mousedown", function (evt) {
 				// NOTE: This runs only when in desktop mode
-				if (!this._useCenteredDropDown() && (!this.minFilterChars || this._inputReadOnly)) {
+				if (!this._isMobile && (!this.minFilterChars || this._inputReadOnly)) {
 					// event could be triggered by the down arrow element. If so, we do not react to it.
 					if (evt.srcElement !== this.buttonNode && !this.disabled) {
 						if (!this.opened) {
@@ -330,6 +332,8 @@ define([
 					}
 				}
 			}.bind(this));
+
+			this._isMobile = !!ComboPopup;
 		},
 
 		parseAttribute: dcl.superCall(function (sup) {
@@ -395,7 +399,8 @@ define([
 				}
 			}
 			if ("autoFilter" in oldValues ||
-				"readOnly" in oldValues) {
+				"readOnly" in oldValues ||
+				"source" in oldValues) {
 				updateReadOnly = true;
 			}
 			if (updateReadOnly) {
@@ -427,10 +432,10 @@ define([
 		 * binds the `readonly` attribute of the input element.
 		 * @private
 		 */
-		_updateInputReadOnly: function () {
+		_updateInputReadOnly: function (emptySource) {
 			var oldValue = this._inputReadOnly;
-			this._inputReadOnly = this.readOnly || !this.autoFilter ||
-				this._useCenteredDropDown() || this.selectionMode === "multiple";
+			this._inputReadOnly = emptySource || (this.hasDownArrow && this._isSourceEmpty()) ||
+				this.readOnly || !this.autoFilter || this.selectionMode === "multiple";
 			if (this._inputReadOnly === oldValue) {
 				// FormValueWidget.refreshRendering() mirrors the value of widget.readOnly
 				// to focusNode.readOnly, thus competing with the binding of the readOnly
@@ -543,6 +548,12 @@ define([
 					this.handleOnInput(this.value); // emit "input" event
 				}.bind(this)),
 
+				this.list.observe(function (oldValues) {
+					if ("renderItems" in oldValues) {
+						this._updateInputReadOnly(this._isSourceEmpty());
+					}
+				}.bind(this)),
+
 				this.list.on("query-success", this._setSelectedItems.bind(this))
 			];
 		},
@@ -589,19 +600,18 @@ define([
 		 * on the channel has() features set by `deliteful/features`.
 		 * @private
 		 */
-		_useCenteredDropDown: function () {
-			return !!ComboPopup;
-		},
+		// _useCenteredDropDown: function () {
+		// 	return !!ComboPopup;
+		// },
 
 		loadDropDown: function () {
 			this._updateInputReadOnly();
 
-			var centeredDropDown = this._useCenteredDropDown();
-			var dropDown = centeredDropDown ?
+			var dropDown = this._isMobile ?
 				this.createCenteredDropDown() :
 				this.createAboveBelowDropDown();
 
-			this.dropDownPosition = centeredDropDown ?
+			this.dropDownPosition = this._isMobile ?
 				["center"] :
 				["below", "above"]; // this is the default
 
@@ -651,11 +661,10 @@ define([
 		 * @return {boolean}
 		 */
 		shouldRunQuery: function (inputElement) {
-			var mobile = this._useCenteredDropDown();
 			if (inputElement.value.length !== 0) {
 				// inputNode contains text
 				if (inputElement.value.length < this.minFilterChars) {
-					if (!mobile) {
+					if (!this._isMobile) {
 						this.closeDropDown();
 					}
 					return false;
@@ -676,7 +685,7 @@ define([
 		 * Toggles the list's visibility when ComboPopup is used (so in mobile)
 		 */
 		_toggleComboPopupList: function () {
-			if (this._useCenteredDropDown()) {
+			if (this._isMobile) {
 				this.list.setAttribute("d-shown", "" + this.inputNode.value.length >= this.minFilterChars);
 				this.list.emit("delite-size-change");
 			}
@@ -700,7 +709,7 @@ define([
 
 				// save what user typed at each keystroke.
 				this.value = inputElement.value;
-				if (this._useCenteredDropDown()) {
+				if (this._isMobile) {
 					this.displayedValue = inputElement.value;
 				}
 				this.handleOnInput(this.value); // emit "input" event.
@@ -758,7 +767,7 @@ define([
 				} else if (evt.key === "ArrowDown" || evt.key === "ArrowUp" ||
 					evt.key === "PageDown" || evt.key === "PageUp" ||
 					evt.key === "Home" || evt.key === "End") {
-					if (this._useCenteredDropDown()) {
+					if (this._isMobile) {
 						this.list.emit("keydown", evt);
 					}
 					evt.stopPropagation();
@@ -936,12 +945,10 @@ define([
 				this._setSelectedItems();
 
 				if (!this.opened) {
-					var mobile = this._useCenteredDropDown();
-
 					// On desktop, leave focus in the original <input>.  But on mobile, focus the popup dialog.
-					this.focusOnPointerOpen = this.focusOnKeyboardOpen = mobile;
+					this.focusOnPointerOpen = this.focusOnKeyboardOpen = this._isMobile;
 
-					if (!mobile) {
+					if (!this._isMobile) {
 						this.defer(function () {
 							// Avoid losing focus when clicking the arrow (instead of the input element):
 							// TODO: isn't this already handled by delite/HasDropDown#_dropDownPointerUpHandler() ?
@@ -956,7 +963,7 @@ define([
 					// Avoid that List gives focus to list items when navigating, which would
 					// blur the input field used for entering the filtering criteria.
 					this.dropDown.focusDescendants = false;
-					if (!this._useCenteredDropDown()) {
+					if (!this._isMobile) {
 						// desktop version
 						this._updateScroll(undefined, true);	// sets this.list.navigatedDescendant
 						this._setActiveDescendant(this.list.navigatedDescendant);
@@ -1047,6 +1054,18 @@ define([
 				var input = this._popupInput || this.inputNode;
 				input.setAttribute("aria-activedescendant", nd.id);
 			}
+		},
+
+		_isSourceEmpty: function () {
+			var _source = this.source || (this.list && this.list.source);
+			if (_source) {
+				if (Array.isArray(_source)) {
+					return _source.length === 0;
+				}
+				// not an array.
+				return _source.data && _source.data.length === 0;
+			}
+			return true;
 		}
 	});
 });

@@ -20,6 +20,7 @@
 	<script type="text/javascript">
 		require([
 			"requirejs-dplugins/jquery!event",
+			"dstore/Memory",
 			"deliteful/list/List",
 			"deliteful/tests/functional/SlowStore",
 			"deliteful/Combobox",
@@ -28,7 +29,7 @@
 			"deliteful/Checkbox",
 			"delite/theme!delite/themes/{{theme}}/global.css",	// page level CSS
 			"requirejs-domready/domReady!"
-		], function ($, List, SlowStore, Combobox) {
+		], function ($, Memory, List, SlowStore, Combobox) {
 
 			startsWith.on("change", function () {
 				comboTeams.filterMode = "startsWith";
@@ -93,6 +94,17 @@
 				return {inputText: args.inputText, rexExp: args.rexExp, beResponsive: false, filterMode: this.filterMode, ignoreCase: this.ignoreCase};
 			};
 			container.appendChild(comboTeamsAutoComplete);
+
+			var comboEmptyStore = new Combobox({
+				id: "comboEmptyStore",
+				selectionMode: "single",
+				autoFilter: true,
+				hasDownArrow: true,
+				list: new List({showNoItems: true}),
+				source: new Memory()
+			});
+
+			document.getElementById("comboEmptyStoreContainer").appendChild(comboEmptyStore);
 
 			document.body.style.display = "";
 		});
@@ -233,6 +245,11 @@
 	</d-combobox>
 
 	<p>
+	<label for="comboEmptyStoreContainer-input">Combobox with an empty store</label>
+	<br/>
+	<div id="comboEmptyStoreContainer"></div>
+
+	<p>
 	<button is="d-button" onclick="showResults()">Done</button>
 	</p>
 	<br/><br/>
@@ -242,6 +259,8 @@
 	<span>[hasDropDown:false, source: SlowStore, filterDelay:500ms]</span>
 	</p>
 	<div id="comboTeamsAutoCompleteContainer"></div>
+
+
 	<br/>
 </body>
 </html>

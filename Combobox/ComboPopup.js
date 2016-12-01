@@ -88,7 +88,7 @@ define([
 		 * @protected
 		 */
 		focus: function () {
-			if (this.combobox.autoFilter && this.combobox.selectionMode === "single") {
+			if (!this.combobox._inputReadOnly) {
 				this.inputNode.focus();
 			} else {
 				// first check if list is not hidden.
