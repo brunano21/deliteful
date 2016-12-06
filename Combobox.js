@@ -986,6 +986,8 @@ define([
 						}
 						this.dropDown.focus();
 					}
+
+					this.focusNode.setAttribute("aria-expanded", "true");
 				}.bind(this));
 			};
 		}),
@@ -1003,6 +1005,7 @@ define([
 					// Closing the dropdown represents a commit interaction
 					this.handleOnChange(this.value); // emit "change" event
 				}
+				this.focusNode.removeAttribute("aria-expanded");
 				sup.apply(this, arguments);
 			};
 		}),
